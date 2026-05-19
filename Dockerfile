@@ -1,38 +1,39 @@
-# ---- Этап сборки (build stage) ----
 FROM python:3.12-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml uv.lock ./
 
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-editable
 
-# Копируем остальной исходный код
 COPY . .
 
 RUN uv run python -c "from app.main import app"
 
 FROM python:3.12-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH" \
+    VIRTUAL_ENV="/app/.venv"
 
 WORKDIR /app
 
-# Копируем виртуальное окружение и код из builder-образа
-COPY --from=builder /app/.venv /app/.venv
-COPY --from=builder /app /app
+RUN useradd -m appuser
 
-ENV PATH="/app/.venv/bin:$PATH"
-ENV VIRTUAL_ENV="/app/.venv"
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/app /app/app
+
+USER appuser
 
 EXPOSE 8000
 

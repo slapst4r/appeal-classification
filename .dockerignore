@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.python-version
+
+# Virtualenv
+.venv
+venv
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov
+
+# Type checkers
+.mypy_cache
+.ruff_cache
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store
+
+# Build artifacts
+dist
+build
+*.egg-info
+
+# Environment
+.env
+.env.*
+
+# Docker
+Dockerfile
+docker-compose.yml
