@@ -12,13 +12,5 @@ class Appeal(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     contains_explicit = Column(Boolean, default=False)
     unclassified_reason = Column(String, nullable=True)
-    category = relationship("AppealCategory", back_populates="appeal", uselist=False)
-
-
-class AppealCategory(Base):
-    __tablename__ = 'category'
-    id = Column(Integer, primary_key=True)
-    appeal_id = Column(Integer, ForeignKey('appeals.id'))
-    category = Column(String, nullable=False)
+    category = Column(String, nullable=True)
     reason = Column(String, nullable=True)
-    appeal = relationship("Appeal", back_populates="category")

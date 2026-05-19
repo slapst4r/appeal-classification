@@ -22,6 +22,7 @@ class AppealFromDB(ClassificationResponse):
     text: str
     contains_explicit: bool
     unclassified_reason: Optional[str]
+    category: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)
     

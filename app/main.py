@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload 
 from app.database import get_db, engine
-from app.models import Base, Appeal, AppealCategory
+from app.models import Base, Appeal
 from app.schemas import (
     ClassificationRequest, ClassificationResponse, AppealFromDB, AnalyticsResponse, CategoryResult
 )
@@ -49,22 +49,16 @@ async def classify_appeal(
     appeal = Appeal(
         text=req.text,
         contains_explicit=contains_explicit,
-        unclassified_reason=unclass_reason
+        unclassified_reason=unclass_reason,
+        category=category[0]["category"] if category else None,
+        reason=category[0]["reason"] if category else None,
     )
     db.add(appeal)
     await db.flush()
 
-    if not contains_explicit and category:
-        cat = category[0]
-        db.add(AppealCategory(
-            appeal_id=appeal.id,
-            category=cat["category"],
-            reason=cat["reason"]
-        ))
-
     await db.commit()
 
-    if contains_explicit or not category:
+    if contains_explicit and not category:
         return ClassificationResponse(
             id=appeal.id,
             category=None,  # или как-то иначе обозначить отсутствие
@@ -73,7 +67,7 @@ async def classify_appeal(
     
     return ClassificationResponse(
         id=appeal.id,
-        category=CategoryResult(category=cat["category"], reason=cat["reason"]),
+        category=CategoryResult(category=category[0]["category"], reason=category[0]["reason"]) if category else None,
         created_at=appeal.created_at
     )
 
@@ -88,11 +82,7 @@ async def get_classification(
     Args:
         id (int): id обращения
     """
-    result = await db.execute(
-        select(Appeal)
-        .options(selectinload(Appeal.category))
-        .where(Appeal.id == appeal_id)
-    )
+    result = await db.execute(select(Appeal).where(Appeal.id == appeal_id))
     appeal = result.scalar_one_or_none()
     if not appeal:
         raise HTTPException(status_code=404, detail="Обращение не найдено")
