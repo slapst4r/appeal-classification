@@ -1,0 +1,16 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: appeal-classifier
+    network_mode: host
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./appeals.db
+      - LLM_BACKEND=ollama
+      - OLLAMA_HOST=http://localhost:11434
+      - OLLAMA_MODEL=gemma4:e4b
+    volumes:
+      - ./data:/app/data
+      - ./app/appeals.db:/app/appeals.db
+    restart: unless-stopped
